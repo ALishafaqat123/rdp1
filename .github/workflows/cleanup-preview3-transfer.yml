@@ -1,0 +1,20 @@
+name: Cleanup Preview 3 Transfer
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/cleanup-preview3-transfer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete temporary release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete preview3-chat-transfer --repo ALishafaqat123/rdp1 --yes --cleanup-tag
