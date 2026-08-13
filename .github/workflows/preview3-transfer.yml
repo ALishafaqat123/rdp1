@@ -28,8 +28,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh release delete preview3-chat-transfer --yes --cleanup-tag 2>/dev/null || true
-          gh release create preview3-chat-transfer --title 'Temporary Preview 3 Transfer' --notes 'Temporary transfer asset.'
-          gh release upload preview3-chat-transfer Rizwan-Media-Saver-PC-v1.2.0-Preview3-Setup.exe --clobber
+          gh release delete preview3-chat-transfer --repo ALishafaqat123/rdp1 --yes --cleanup-tag 2>/dev/null || true
+          gh release create preview3-chat-transfer --repo ALishafaqat123/rdp1 --title 'Temporary Preview 3 Transfer' --notes 'Temporary transfer asset.'
+          gh release upload preview3-chat-transfer --repo ALishafaqat123/rdp1 Rizwan-Media-Saver-PC-v1.2.0-Preview3-Setup.exe --clobber
 
-# trigger 2
+# trigger 3
