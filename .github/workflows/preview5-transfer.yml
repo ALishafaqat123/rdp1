@@ -1,0 +1,33 @@
+name: Temporary Preview 5 Transfer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/preview5-transfer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download private signed asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xMzI3ODMwNjgxLzliYjc0OWNjLWM2NTEtNGY0Ny1iZWI0LTQ0M2VmMWU3ZWE5OT9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0wOC0xNlQwOCUzQTA2JTNBNDNaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFJpendhbi1NZWRpYS1TYXZlci1QQy12MS4yLjAtUHJldmlldzUtU2V0dXAuZXhlJnJzY3Q9YXBwbGljYXRpb24lMkZvY3RldC1zdHJlYW0mc2tvaWQ9OTZjMmQ0MTAtNTcxMS00M2ExLWFlZGQtYWIxOTQ3YWE3YWIwJnNrdGlkPTM5OGE2NjU0LTk5N2ItNDdlOS1iMTJiLTk1MTViODk2YjRkZSZza3Q9MjAyNi0wOC0xNlQwNyUzQTA2JTNBMTJaJnNrZT0yMDI2LTA4LTE2VDA4JTNBMDYlM0E0M1omc2tzPWImc2t2PTIwMTgtMTEtMDkmc2lnPTVqbXE1NFN4SHhDTTdmNXVlVGs1cFRKYmh6NGszQzcxWlJaZHJrd2M2bWslM0Qmand0PWV5SjBlWEFpT2lKS1YxUWlMQ0poYkdjaU9pSklVekkxTmlKOS5leUpwYzNNaU9pSm5hWFJvZFdJdVkyOXRJaXdpWVhWa0lqb2ljbVZzWldGelpTMWhjM05sZEhNdVoybDBhSFZpZFhObGNtTnZiblJsYm5RdVkyOXRJaXdpYTJWNUlqb2lhMlY1TVNJc0ltVjRjQ0k2TVRjNE5qZzJPREE1T1N3aWJtSm1Jam94TnpnMk9EWTBORGs1TENKd1lYUm9Jam9pY21Wc1pXRnpaV0Z6YzJWMGNISnZaSFZqZEdsdmJpNWliRzlpTG1OdmNtVXVkMmx1Wkc5M2N5NXVaWFFpZlEuNkViaHFmOWV6ZWxXa0Z2bnA2TGdNc1ByanZxclQwcWNwc2xyMV9RQVRROCZyZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPWF0dGFjaG1lbnQlM0IlMjBmaWxlbmFtZSUzRFJpendhbi1NZWRpYS1TYXZlci1QQy12MS4yLjAtUHJldmlldzUtU2V0dXAuZXhlJnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbQ==' | base64 -d > /tmp/url
+          curl -L --fail --retry 3 "$(cat /tmp/url)" -o Rizwan-Media-Saver-PC-v1.2.0-Preview5-Setup.exe
+          ls -lh Rizwan-Media-Saver-PC-v1.2.0-Preview5-Setup.exe
+
+      - name: Publish temporary public release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release delete preview5-chat-transfer --repo ALishafaqat123/rdp1 --yes --cleanup-tag 2>/dev/null || true
+          gh release create preview5-chat-transfer --repo ALishafaqat123/rdp1 --title 'Temporary Preview 5 Transfer' --notes 'Temporary transfer asset.'
+          gh release upload preview5-chat-transfer --repo ALishafaqat123/rdp1 Rizwan-Media-Saver-PC-v1.2.0-Preview5-Setup.exe --clobber
