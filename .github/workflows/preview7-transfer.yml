@@ -1,0 +1,28 @@
+name: Temporary Preview 7 Transfer
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths: [ ".github/workflows/preview7-transfer.yml" ]
+permissions:
+  contents: write
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download private signed asset
+        env:
+          SOURCE_URL: "https://release-assets.githubusercontent.com/github-production-release-asset/1327830681/30d5887c-3fee-4839-8c07-6d7bbbce48ed?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-08-16T08%3A38%3A12Z&rscd=attachment%3B+filename%3DRizwan-Media-Saver-PC-v1.2.0-Preview7-Setup.exe&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-08-16T07%3A37%3A25Z&ske=2026-08-16T08%3A38%3A12Z&sks=b&skv=2018-11-09&sig=Ugeje1VsZE90dEz5uxOxoi8SlObyYz8YmxR6KqEObdU%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc4Njg3MDI4NiwibmJmIjoxNzg2ODY2Njg2LCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.mcnxLiQms_-guQjdZFp9SFyrCbnS2cHu49VvcfMPlW4&response-content-disposition=attachment%3B%20filename%3DRizwan-Media-Saver-PC-v1.2.0-Preview7-Setup.exe&response-content-type=application%2Foctet-stream"
+        run: |
+          set -euo pipefail
+          curl -L --fail --retry 4 --retry-all-errors "$SOURCE_URL" -o Rizwan-Media-Saver-PC-v1.2.0-Preview7-Setup.exe
+          test -s Rizwan-Media-Saver-PC-v1.2.0-Preview7-Setup.exe
+      - name: Publish temporary public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="preview7-chat-transfer"
+          gh release delete "$tag" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$tag" --title "Temporary Preview 7 Transfer" --notes "Temporary transfer asset."
+          gh release upload "$tag" Rizwan-Media-Saver-PC-v1.2.0-Preview7-Setup.exe --clobber
