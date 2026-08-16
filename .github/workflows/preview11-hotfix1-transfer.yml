@@ -1,0 +1,34 @@
+name: Temporary Preview 11 Hotfix 1 Transfer
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/preview11-hotfix1-transfer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download private signed asset
+        shell: bash
+        env:
+          SIGNED_B64: "aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xMzI3ODMwNjgxL2JiNDhhMmZkLWQzNDktNDJmYS1iZDc0LTliNmM1YzllZjRjZD9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0wOC0xNlQxNCUzQTQ1JTNBMDlaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFJpendhbi1NZWRpYS1TYXZlci1QQy12MS4yLjAtUHJldmlldzExLUhvdGZpeDEtU2V0dXAuZXhlJnJzY3Q9YXBwbGljYXRpb24lMkZvY3RldC1zdHJlYW0mc2tvaWQ9OTZjMmQ0MTAtNTcxMS00M2ExLWFlZGQtYWIxOTQ3YWE3YWIwJnNrdGlkPTM5OGE2NjU0LTk5N2ItNDdlOS1iMTJiLTk1MTViODk2YjRkZSZza3Q9MjAyNi0wOC0xNlQxMyUzQTQ0JTNBNDRaJnNrZT0yMDI2LTA4LTE2VDE0JTNBNDUlM0EwOVomc2tzPWImc2t2PTIwMTgtMTEtMDkmc2lnPXJZclVrYlF3cXkxVHR1cGJycUFYQUhKMXJWWTBPSXZrQXBPcGdpM1pJV3MlM0Qmand0PWV5SjBlWEFpT2lKS1YxUWlMQ0poYkdjaU9pSklVekkxTmlKOS5leUpwYzNNaU9pSm5hWFJvZFdJdVkyOXRJaXdpWVhWa0lqb2ljbVZzWldGelpTMWhjM05sZEhNdVoybDBhSFZpZFhObGNtTnZiblJsYm5RdVkyOXRJaXdpYTJWNUlqb2lhMlY1TVNJc0ltVjRjQ0k2TVRjNE5qZzVNVGczTUN3aWJtSm1Jam94TnpnMk9EZzRNamN3TENKd1lYUm9Jam9pY21Wc1pXRnpaV0Z6YzJWMGNISnZaSFZqZEdsdmJpNWliRzlpTG1OdmNtVXVkMmx1Wkc5M2N5NXVaWFFpZlEuTFRLUWVfQm1zNy1pR0ZSSHMtNXFkZlNzVEhKUTdRbTVYWW5kdUNEeG51VSZyZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPWF0dGFjaG1lbnQlM0IlMjBmaWxlbmFtZSUzRFJpendhbi1NZWRpYS1TYXZlci1QQy12MS4yLjAtUHJldmlldzExLUhvdGZpeDEtU2V0dXAuZXhlJnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbQ=="
+        run: |
+          set -euo pipefail
+          url=$(printf '%s' "$SIGNED_B64" | base64 -d)
+          curl -L --fail --retry 4 --retry-all-errors "$url" -o Rizwan-Media-Saver-PC-v1.2.0-Preview11-Hotfix1-Setup.exe
+          test -s Rizwan-Media-Saver-PC-v1.2.0-Preview11-Hotfix1-Setup.exe
+
+      - name: Publish temporary public release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release delete preview11-hotfix1-chat-transfer --repo ALishafaqat123/rdp1 --yes --cleanup-tag 2>/dev/null || true
+          gh release create preview11-hotfix1-chat-transfer --repo ALishafaqat123/rdp1 --title "Temporary Preview 11 Hotfix 1 Transfer" --notes "Temporary transfer asset."
+          gh release upload preview11-hotfix1-chat-transfer --repo ALishafaqat123/rdp1 Rizwan-Media-Saver-PC-v1.2.0-Preview11-Hotfix1-Setup.exe --clobber
