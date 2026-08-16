@@ -1,0 +1,28 @@
+name: Temporary Preview 9 Transfer
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths: [ ".github/workflows/preview9-transfer.yml" ]
+permissions:
+  contents: write
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download private signed asset
+        env:
+          SOURCE_URL: "https://release-assets.githubusercontent.com/github-production-release-asset/1327830681/9c0dc184-337a-40a7-9b5e-af49ad628d59?sp=r&sv=2018-11-09&sr=b&spr=https&se=2026-08-16T09%3A26%3A48Z&rscd=attachment%3B+filename%3DRizwan-Media-Saver-PC-v1.2.0-Preview9-Setup.exe&rsct=application%2Foctet-stream&skoid=96c2d410-5711-43a1-aedd-ab1947aa7ab0&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skt=2026-08-16T08%3A26%3A22Z&ske=2026-08-16T09%3A26%3A48Z&sks=b&skv=2018-11-09&sig=KuIhGnjtYheMpytL6H3%2BL1Yj1c8rczz39kM1AhUNBEg%3D&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmVsZWFzZS1hc3NldHMuZ2l0aHVidXNlcmNvbnRlbnQuY29tIiwia2V5Ijoia2V5MSIsImV4cCI6MTc4Njg3Mjg4MCwibmJmIjoxNzg2ODY5MjgwLCJwYXRoIjoicmVsZWFzZWFzc2V0cHJvZHVjdGlvbi5ibG9iLmNvcmUud2luZG93cy5uZXQifQ.Z7cVeyBZI8ZnbIysPvvCTqL_d1cST06mUBTnZG3TGwo&response-content-disposition=attachment%3B%20filename%3DRizwan-Media-Saver-PC-v1.2.0-Preview9-Setup.exe&response-content-type=application%2Foctet-stream"
+        run: |
+          set -euo pipefail
+          curl -L --fail --retry 4 --retry-all-errors "$SOURCE_URL" -o Rizwan-Media-Saver-PC-v1.2.0-Preview9-Setup.exe
+          test -s Rizwan-Media-Saver-PC-v1.2.0-Preview9-Setup.exe
+      - name: Publish temporary public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="preview9-chat-transfer"
+          gh release delete "$tag" --repo ALishafaqat123/rdp1 --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$tag" --repo ALishafaqat123/rdp1 --title "Temporary Preview 9 Transfer" --notes "Temporary transfer asset."
+          gh release upload "$tag" Rizwan-Media-Saver-PC-v1.2.0-Preview9-Setup.exe --repo ALishafaqat123/rdp1 --clobber
