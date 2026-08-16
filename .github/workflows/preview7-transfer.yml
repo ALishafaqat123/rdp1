@@ -22,7 +22,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          repo="ALishafaqat123/rdp1"
           tag="preview7-chat-transfer"
-          gh release delete "$tag" --yes --cleanup-tag 2>/dev/null || true
-          gh release create "$tag" --title "Temporary Preview 7 Transfer" --notes "Temporary transfer asset."
-          gh release upload "$tag" Rizwan-Media-Saver-PC-v1.2.0-Preview7-Setup.exe --clobber
+          gh release delete "$tag" --repo "$repo" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$tag" --repo "$repo" --title "Temporary Preview 7 Transfer" --notes "Temporary transfer asset."
+          gh release upload "$tag" --repo "$repo" Rizwan-Media-Saver-PC-v1.2.0-Preview7-Setup.exe --clobber
