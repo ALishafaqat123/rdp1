@@ -1,0 +1,34 @@
+name: Temporary Preview 11 Transfer
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/preview11-transfer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download private signed asset
+        shell: bash
+        env:
+          SIGNED_B64: "aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xMzI3ODMwNjgxLzg1ODMzOTMwLTNjYjgtNGZiMC1hNWNkLTVhNjI3NjllN2Q3ZT9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0wOC0xNlQxMiUzQTUwJTNBNTZaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFJpendhbi1NZWRpYS1TYXZlci1QQy12MS4yLjAtUHJldmlldzExLVNldHVwLmV4ZSZyc2N0PWFwcGxpY2F0aW9uJTJGb2N0ZXQtc3RyZWFtJnNrb2lkPTk2YzJkNDEwLTU3MTEtNDNhMS1hZWRkLWFiMTk0N2FhN2FiMCZza3RpZD0zOThhNjY1NC05OTdiLTQ3ZTktYjEyYi05NTE1Yjg5NmI0ZGUmc2t0PTIwMjYtMDgtMTZUMTElM0E1MCUzQTEzWiZza2U9MjAyNi0wOC0xNlQxMiUzQTUwJTNBNTZaJnNrcz1iJnNrdj0yMDE4LTExLTA5JnNpZz0weGRGSFdWWmRSTWlta0FRaU9DWWxpTG9Oc0tDSVduWk9mRjJTUnd0cWs4JTNEJmp3dD1leUowZVhBaU9pSktWMVFpTENKaGJHY2lPaUpJVXpJMU5pSjkuZXlKcGMzTWlPaUpuYVhSb2RXSXVZMjl0SWl3aVlYVmtJam9pY21Wc1pXRnpaUzFoYzNObGRITXVaMmwwYUhWaWRYTmxjbU52Ym5SbGJuUXVZMjl0SWl3aWEyVjVJam9pYTJWNU1TSXNJbVY0Y0NJNk1UYzROamc0TlRVek5Dd2libUptSWpveE56ZzJPRGd4T1RNMExDSndZWFJvSWpvaWNtVnNaV0Z6WldGemMyVjBjSEp2WkhWamRHbHZiaTVpYkc5aUxtTnZjbVV1ZDJsdVpHOTNjeTV1WlhRaWZRLl9FZ1VGdmp4UGxrWXBQZHNhdjlCeUNud2d2WE9TVUpYMzNxWERnUHp1eFkmcmVzcG9uc2UtY29udGVudC1kaXNwb3NpdGlvbj1hdHRhY2htZW50JTNCJTIwZmlsZW5hbWUlM0RSaXp3YW4tTWVkaWEtU2F2ZXItUEMtdjEuMi4wLVByZXZpZXcxMS1TZXR1cC5leGUmcmVzcG9uc2UtY29udGVudC10eXBlPWFwcGxpY2F0aW9uJTJGb2N0ZXQtc3RyZWFt"
+        run: |
+          set -euo pipefail
+          url=$(printf '%s' "$SIGNED_B64" | base64 -d)
+          curl -L --fail --retry 4 --retry-all-errors "$url" -o Rizwan-Media-Saver-PC-v1.2.0-Preview11-Setup.exe
+          test -s Rizwan-Media-Saver-PC-v1.2.0-Preview11-Setup.exe
+
+      - name: Publish temporary public release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release delete preview11-chat-transfer --repo ALishafaqat123/rdp1 --yes --cleanup-tag 2>/dev/null || true
+          gh release create preview11-chat-transfer --repo ALishafaqat123/rdp1 --title "Temporary Preview 11 Transfer" --notes "Temporary transfer asset."
+          gh release upload preview11-chat-transfer --repo ALishafaqat123/rdp1 Rizwan-Media-Saver-PC-v1.2.0-Preview11-Setup.exe --clobber
