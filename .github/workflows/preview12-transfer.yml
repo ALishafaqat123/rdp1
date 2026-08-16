@@ -1,0 +1,38 @@
+name: Temporary Preview 12 Transfer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/preview12-transfer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download private signed asset
+        shell: bash
+        env:
+          SIGNED_URL_B64: aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xMzI3ODMwNjgxLzQ0OTE4NWYwLTk2YjEtNGIzMS05ZjNkLWFjYjFjODgyMzhlND9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0wOC0xNlQxNyUzQTAzJTNBNDVaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFJpendhbi1NZWRpYS1TYXZlci1QQy12MS4yLjAtUHJldmlldzEyLVNldHVwLmV4ZSZyc2N0PWFwcGxpY2F0aW9uJTJGb2N0ZXQtc3RyZWFtJnNrb2lkPTk2YzJkNDEwLTU3MTEtNDNhMS1hZWRkLWFiMTk0N2FhN2FiMCZza3RpZD0zOThhNjY1NC05OTdiLTQ3ZTktYjEyYi05NTE1Yjg5NmI0ZGUmc2t0PTIwMjYtMDgtMTZUMTYlM0EwMyUzQTQ1WiZza2U9MjAyNi0wOC0xNlQxNyUzQTAzJTNBNDVaJnNrcz1iJnNrdj0yMDE4LTExLTA5JnNpZz1IR09Yc2NZSVEzUkslMkZ2b0VjN1pqdWl2cEtmUzJRRlBUZGljJTJCRTVSZVZNUSUzRCZqd3Q9ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SnBjM01pT2lKbmFYUm9kV0l1WTI5dElpd2lZWFZrSWpvaWNtVnNaV0Z6WlMxaGMzTmxkSE11WjJsMGFIVmlkWE5sY21OdmJuUmxiblF1WTI5dElpd2lhMlY1SWpvaWEyVjVNU0lzSW1WNGNDSTZNVGM0Tmprd01EVXlOQ3dpYm1KbUlqb3hOemcyT0RrMk9USTBMQ0p3WVhSb0lqb2ljbVZzWldGelpXRnpjMlYwY0hKdlpIVmpkR2x2Ymk1aWJHOWlMbU52Y21VdWQybHVaRzkzY3k1dVpYUWlmUS5lLXBnZldnS2I1bURQWW9HN1FSazQ5VmFGUDhNNlM2ODNEaldvZEl6SUZZJnJlc3BvbnNlLWNvbnRlbnQtZGlzcG9zaXRpb249YXR0YWNobWVudCUzQiUyMGZpbGVuYW1lJTNEUml6d2FuLU1lZGlhLVNhdmVyLVBDLXYxLjIuMC1QcmV2aWV3MTItU2V0dXAuZXhlJnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbQ==
+        run: |
+          set -euo pipefail
+          mkdir -p transfer
+          printf '%s' "$SIGNED_URL_B64" | base64 -d > /tmp/url.txt
+          curl -L --fail --retry 5 --retry-all-errors "$(cat /tmp/url.txt)" -o transfer/Rizwan-Media-Saver-PC-v1.2.0-Preview12-Setup.exe
+          test "$(stat -c%s transfer/Rizwan-Media-Saver-PC-v1.2.0-Preview12-Setup.exe)" = "168526354"
+          echo "a1d89146af0fa9b2ecc46b64032fab4193b5a8940d6aec3d91d775f98596ea3e  transfer/Rizwan-Media-Saver-PC-v1.2.0-Preview12-Setup.exe" | sha256sum -c -
+
+      - name: Publish temporary public release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release delete preview12-chat-transfer --repo ALishafaqat123/rdp1 --yes --cleanup-tag 2>/dev/null || true
+          gh release delete preview11-hotfix1-chat-transfer --repo ALishafaqat123/rdp1 --yes --cleanup-tag 2>/dev/null || true
+          gh release create preview12-chat-transfer --repo ALishafaqat123/rdp1 --title "Temporary Preview 12 Transfer" --notes "Temporary transfer asset."
+          gh release upload preview12-chat-transfer --repo ALishafaqat123/rdp1 transfer/Rizwan-Media-Saver-PC-v1.2.0-Preview12-Setup.exe --clobber
