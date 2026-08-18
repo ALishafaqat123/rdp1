@@ -1,0 +1,44 @@
+name: Verify Preview 12 Hotfix 2 Transfer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/preview12-hotfix2-verify-transfer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for temporary release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 18); do
+            if gh release view preview12-hotfix2-chat-transfer --repo ALishafaqat123/rdp1 >/dev/null 2>&1; then
+              ok=1
+              break
+            fi
+            sleep 10
+          done
+          test "$ok" = "1"
+          gh release view preview12-hotfix2-chat-transfer --repo ALishafaqat123/rdp1 --json assets --jq '.assets[].name' | grep -Fx 'Rizwan-Media-Saver-PC-v1.2.0-Preview12-Hotfix2-Setup.exe'
+      - name: Record verified transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .transfer-status
+          printf 'SUCCESS\nfile=Rizwan-Media-Saver-PC-v1.2.0-Preview12-Hotfix2-Setup.exe\nsha256=781892592d59ed84f8a8f85a66fbeb53290498622de80e704fb66692c982f4e7\n' > .transfer-status/preview12-hotfix2.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .transfer-status/preview12-hotfix2.txt
+          git commit -m "Record Preview 12 Hotfix 2 transfer verification"
+          git push origin HEAD:main
