@@ -37,3 +37,15 @@ jobs:
           set -euo pipefail
           gh release delete "$TAG" --repo ALishafaqat123/rdp1 --yes --cleanup-tag 2>/dev/null || true
           gh release create "$TAG" "$FILE_NAME" --repo ALishafaqat123/rdp1 --title "Temporary Preview 12 Hotfix 2 Transfer" --notes "Temporary transfer asset."
+
+      - name: Record transfer success
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .transfer-status
+          printf 'SUCCESS\nfile=%s\nsha256=%s\n' "$FILE_NAME" "$EXPECTED_SHA256" > .transfer-status/preview12-hotfix2.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .transfer-status/preview12-hotfix2.txt
+          git commit -m "Record Preview 12 Hotfix 2 transfer success" || exit 0
+          git push origin HEAD:main
