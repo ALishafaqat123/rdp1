@@ -1,0 +1,44 @@
+name: Verify Preview 13 Transfer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/preview13-transfer-verify.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify public release asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="preview13-chat-transfer"
+          file="Rizwan-Media-Saver-PC-v1.2.0-Preview13-Setup.exe"
+          expected="4b638efbaf5c341b23fa0c6765277de91e9f70e5da610c49983bf8496615a7c3"
+          gh release view "$tag" --repo ALishafaqat123/rdp1 >/dev/null
+          rm -f "$file"
+          gh release download "$tag" --repo ALishafaqat123/rdp1 --pattern "$file" --dir .
+          actual=$(sha256sum "$file" | awk '{print $1}')
+          test "$actual" = "$expected"
+          mkdir -p .transfer-status
+          printf 'SUCCESS\nfile=%s\nsha256=%s\n' "$file" "$actual" > .transfer-status/preview13.txt
+
+      - name: Record verified transfer
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .transfer-status/preview13.txt
+          git commit -m "Record Preview 13 transfer success" || exit 0
+          git push
