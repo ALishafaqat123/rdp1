@@ -1,0 +1,3 @@
+SUCCESS
+file=Rizwan-Media-Saver-PC-v1.2.0-Preview13-Setup.exe
+sha256=4b638efbaf5c341b23fa0c6765277de91e9f70e5da610c49983bf8496615a7c3
