@@ -1,0 +1,62 @@
+name: Temporary Preview 19 Transfer
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/preview19-transfer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download verified Preview 19 installer
+        shell: bash
+        env:
+          SIGNED_URL_B64: "aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xMzI3ODMwNjgxLzk1NDNlYTZiLTNmMjUtNDgyYi04NGJiLThlZjg0NzVlOGFkMD9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0wOC0yM1QxMyUzQTU0JTNBMjZaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFJpendhbi1NZWRpYS1TYXZlci1QQy12MS4yLjAtUHJldmlldzE5LVNldHVwLmV4ZSZyc2N0PWFwcGxpY2F0aW9uJTJGb2N0ZXQtc3RyZWFtJnNrb2lkPTk2YzJkNDEwLTU3MTEtNDNhMS1hZWRkLWFiMTk0N2FhN2FiMCZza3RpZD0zOThhNjY1NC05OTdiLTQ3ZTktYjEyYi05NTE1Yjg5NmI0ZGUmc2t0PTIwMjYtMDgtMjNUMTIlM0E1MyUzQTUwWiZza2U9MjAyNi0wOC0yM1QxMyUzQTU0JTNBMjZaJnNrcz1iJnNrdj0yMDE4LTExLTA5JnNpZz1lOEVsTUMlMkZqVkVoN0pBbmN1d2t2V3p2Ukp0MiUyQjZSVm1vdUU5VmNrWGIzVSUzRCZqd3Q9ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SnBjM01pT2lKbmFYUm9kV0l1WTI5dElpd2lZWFZrSWpvaWNtVnNaV0Z6WlMxaGMzTmxkSE11WjJsMGFIVmlkWE5sY21OdmJuUmxiblF1WTI5dElpd2lhMlY1SWpvaWEyVjVNU0lzSW1WNGNDSTZNVGM0TnpRNU16VTRPU3dpYm1KbUlqb3hOemczTkRnNU9UZzVMQ0p3WVhSb0lqb2ljbVZzWldGelpXRnpjMlYwY0hKdlpIVmpkR2x2Ymk1aWJHOWlMbU52Y21VdWQybHVaRzkzY3k1dVpYUWlmUS5hV2UySUNGN3BQckZhenNkR2psVGlZRGZZNjk1U3lGNXN6Zl9aek9ITU53JnJlc3BvbnNlLWNvbnRlbnQtZGlzcG9zaXRpb249YXR0YWNobWVudCUzQiUyMGZpbGVuYW1lJTNEUml6d2FuLU1lZGlhLVNhdmVyLVBDLXYxLjIuMC1QcmV2aWV3MTktU2V0dXAuZXhlJnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbQ=="
+          EXPECTED_SHA: "971953a9b5ed57f209a351b41581132f40ee751772df0050bd6f1732c4a68991"
+        run: |
+          set -euo pipefail
+          file="Rizwan-Media-Saver-PC-v1.2.0-Preview19-Setup.exe"
+          url=$(printf '%s' "$SIGNED_URL_B64" | base64 -d)
+          curl -L --fail --retry 5 --retry-all-errors "$url" -o "$file"
+          actual=$(sha256sum "$file" | awk '{print $1}')
+          test "$actual" = "$EXPECTED_SHA"
+          echo "Verified $file • $actual"
+
+      - name: Publish temporary public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="preview19-chat-transfer"
+          file="Rizwan-Media-Saver-PC-v1.2.0-Preview19-Setup.exe"
+          gh release delete "$tag" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$tag" --title "Preview 19 temporary transfer" --notes "Temporary binary transfer only. No source code." "$file"
+
+      - name: Record transfer success
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo="ALishafaqat123/rdp1"
+          tag="preview19-chat-transfer"
+          file="Rizwan-Media-Saver-PC-v1.2.0-Preview19-Setup.exe"
+          rel=$(gh api "repos/$repo/releases/tags/$tag")
+          id=$(printf '%s' "$rel" | jq -r --arg n "$file" '.assets[] | select(.name==$n) | .id' | head -n1)
+          size=$(printf '%s' "$rel" | jq -r --arg n "$file" '.assets[] | select(.name==$n) | .size' | head -n1)
+          mkdir -p .transfer-status
+          printf 'SUCCESS\nasset_id=%s\nsize=%s\nsha256=%s\n' "$id" "$size" "971953a9b5ed57f209a351b41581132f40ee751772df0050bd6f1732c4a68991" > .transfer-status/preview19.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .transfer-status/preview19.txt
+          git commit -m "Record Preview 19 transfer success" || exit 0
+          git push origin HEAD:main
