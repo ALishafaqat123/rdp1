@@ -1,6 +1,5 @@
 name: Temporary Preview 16 Transfer
 
-# Registered transfer workflow — triggered again after first creation.
 on:
   push:
     branches: [ "main" ]
@@ -46,6 +45,7 @@ jobs:
           gh release create "$TAG" "$FILE_NAME" --repo ALishafaqat123/rdp1 --title "Temporary Preview 16 Transfer" --notes "Temporary transfer asset."
 
       - name: Record transfer success
+        if: success()
         shell: bash
         run: |
           mkdir -p .transfer-status
@@ -54,4 +54,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .transfer-status/preview16.txt
           git commit -m "Record Preview 16 transfer success" || exit 0
+          git push
+
+      - name: Record transfer failure
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p .transfer-status
+          printf 'FAILED\n' > .transfer-status/preview16.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .transfer-status/preview16.txt
+          git commit -m "Record Preview 16 transfer failure" || exit 0
           git push
