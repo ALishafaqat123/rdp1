@@ -1,0 +1,36 @@
+name: Temporary Preview 17 Transfer
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/preview17-transfer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download verified private Preview 17 installer
+        env:
+          URL_B64: aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xMzI3ODMwNjgxLzY4OGQyZWQzLWJjMTgtNDQzZi1iNWU3LWM2MjVlMGI0MGU4ND9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0wOC0yM1QxMSUzQTU5JTNBNTVaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFJpendhbi1NZWRpYS1TYXZlci1QQy12MS4yLjAtUHJldmlldzE3LVNldHVwLmV4ZSZyc2N0PWFwcGxpY2F0aW9uJTJGb2N0ZXQtc3RyZWFtJnNrb2lkPTk2YzJkNDEwLTU3MTEtNDNhMS1hZWRkLWFiMTk0N2FhN2FiMCZza3RpZD0zOThhNjY1NC05OTdiLTQ3ZTktYjEyYi05NTE1Yjg5NmI0ZGUmc2t0PTIwMjYtMDgtMjNUMTAlM0E1OSUzQTMxWiZza2U9MjAyNi0wOC0yM1QxMSUzQTU5JTNBNTVaJnNrcz1iJnNrdj0yMDE4LTExLTA5JnNpZz1XRXI4VFhJN0N5RyUyQlRLa2xPNTFYc2M2T1E2dFN6TGh5TGZmVWtlWGdJcEElM0Qmand0PWV5SjBlWEFpT2lKS1YxUWlMQ0poYkdjaU9pSklVekkxTmlKOS5leUpwYzNNaU9pSm5hWFJvZFdJdVkyOXRJaXdpWVhWa0lqb2ljbVZzWldGelpTMWhjM05sZEhNdVoybDBhSFZpZFhObGNtTnZiblJsYm5RdVkyOXRJaXdpYTJWNUlqb2lhMlY1TVNJc0ltVjRjQ0k2TVRjNE56UTROalk0Tnl3aWJtSm1Jam94TnpnM05EZ3pNRGczTENKd1lYUm9Jam9pY21Wc1pXRnpaV0Z6YzJWMGNISnZaSFZqZEdsdmJpNWliRzlpTG1OdmNtVXVkMmx1Wkc5M2N5NXVaWFFpZlEuSnI1elA5bm9SN0wtakgzY1l5MExmUmxVOTVQWGl1STkxOGViUmtYMVFpYyZyZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPWF0dGFjaG1lbnQlM0IlMjBmaWxlbmFtZSUzRFJpendhbi1NZWRpYS1TYXZlci1QQy12MS4yLjAtUHJldmlldzE3LVNldHVwLmV4ZSZyZXNwb25zZS1jb250ZW50LXR5cGU9YXBwbGljYXRpb24lMkZvY3RldC1zdHJlYW0=
+        run: |
+          set -euo pipefail
+          URL="$(printf '%s' "$URL_B64" | base64 -d)"
+          curl -L --fail --retry 4 "$URL" -o Rizwan-Media-Saver-PC-v1.2.0-Preview17-Setup.exe
+          echo "b2b314834af8c93cd83bfde029aa30407f88440031e6f3f5f34d2c0e951facf3  Rizwan-Media-Saver-PC-v1.2.0-Preview17-Setup.exe" | sha256sum -c -
+
+      - name: Create temporary public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release delete preview17-chat-transfer --yes --cleanup-tag 2>/dev/null || true
+          gh release create preview17-chat-transfer \
+            --title "Preview 17 Temporary Transfer" \
+            --notes "Temporary test installer transfer only. No source code." \
+            Rizwan-Media-Saver-PC-v1.2.0-Preview17-Setup.exe
