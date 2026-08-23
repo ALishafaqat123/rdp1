@@ -1,0 +1,40 @@
+name: Check Preview 15 Transfer
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/check-preview15-transfer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check public release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p .transfer-status
+          if gh release view preview15-chat-transfer --repo ALishafaqat123/rdp1 --json assets >/tmp/release.json 2>/dev/null; then
+            if jq -e '.assets[]? | select(.name=="Rizwan-Media-Saver-PC-v1.2.0-Preview15-Setup.exe")' /tmp/release.json >/dev/null; then
+              size=$(jq -r '.assets[] | select(.name=="Rizwan-Media-Saver-PC-v1.2.0-Preview15-Setup.exe") | .size' /tmp/release.json)
+              printf 'SUCCESS\nrelease=yes\nasset=yes\nsize=%s\n' "$size" > .transfer-status/preview15-check.txt
+            else
+              printf 'NOT_READY\nrelease=yes\nasset=no\n' > .transfer-status/preview15-check.txt
+            fi
+          else
+            printf 'NOT_READY\nrelease=no\n' > .transfer-status/preview15-check.txt
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "4189826+github-actions[bot]@users.noreply.github.com"
+          git add .transfer-status/preview15-check.txt
+          git commit -m "Record Preview 15 public release check" || exit 0
+          git pull --rebase origin main || true
+          git push origin HEAD:main
