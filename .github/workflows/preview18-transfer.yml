@@ -60,3 +60,5 @@ jobs:
           git add .transfer-status/preview18.txt
           git commit -m "Record Preview 18 transfer success" || exit 0
           git push origin HEAD:main
+
+# trigger registered transfer workflow
