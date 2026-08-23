@@ -1,0 +1,42 @@
+name: Check Preview 16 Public Release
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/check-preview16-public-release.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check release asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          repo="ALishafaqat123/rdp1"
+          tag="preview16-chat-transfer"
+          file="Rizwan-Media-Saver-PC-v1.2.0-Preview16-Setup.exe"
+          mkdir -p .transfer-status
+          if release=$(gh api "repos/$repo/releases/tags/$tag" 2>/dev/null); then
+            asset_id=$(printf '%s' "$release" | jq -r --arg f "$file" '.assets[]? | select(.name==$f) | .id' | head -n1)
+            size=$(printf '%s' "$release" | jq -r --arg f "$file" '.assets[]? | select(.name==$f) | .size' | head -n1)
+            if [ -n "$asset_id" ]; then
+              printf 'SUCCESS\nasset_id=%s\nsize=%s\n' "$asset_id" "$size" > .transfer-status/preview16-public-check.txt
+            else
+              printf 'NOT_READY\nrelease=yes\nasset=no\n' > .transfer-status/preview16-public-check.txt
+            fi
+          else
+            printf 'NOT_READY\nrelease=no\n' > .transfer-status/preview16-public-check.txt
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .transfer-status/preview16-public-check.txt
+          git commit -m "Record Preview 16 public release check" || exit 0
+          git push
