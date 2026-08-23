@@ -1,0 +1,58 @@
+name: Temporary Preview 15 Transfer
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/preview15-transfer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    env:
+      SIGNED_URL_B64: aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xMzI3ODMwNjgxLzljMzg0MjhiLTMzYTEtNGY2Yi04MjBlLTQ5Y2Q5NmY1YzVjZj9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0wOC0yM1QwOCUzQTEwJTNBMDdaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFJpendhbi1NZWRpYS1TYXZlci1QQy12MS4yLjAtUHJldmlldzE1LVNldHVwLmV4ZSZyc2N0PWFwcGxpY2F0aW9uJTJGb2N0ZXQtc3RyZWFtJnNrb2lkPTk2YzJkNDEwLTU3MTEtNDNhMS1hZWRkLWFiMTk0N2FhN2FiMCZza3RpZD0zOThhNjY1NC05OTdiLTQ3ZTktYjEyYi05NTE1Yjg5NmI0ZGUmc2t0PTIwMjYtMDgtMjNUMDclM0EwOSUzQTIwWiZza2U9MjAyNi0wOC0yM1QwOCUzQTEwJTNBMDdaJnNrcz1iJnNrdj0yMDE4LTExLTA5JnNpZz12bjBjZU9UaSUyRmNOdiUyQjhpYWdqTVRLMWJhbVN1NlhBNjhIVTc4YnNHTGFCYyUzRCZqd3Q9ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SnBjM01pT2lKbmFYUm9kV0l1WTI5dElpd2lZWFZrSWpvaWNtVnNaV0Z6WlMxaGMzTmxkSE11WjJsMGFIVmlkWE5sY21OdmJuUmxiblF1WTI5dElpd2lhMlY1SWpvaWEyVjVNU0lzSW1WNGNDSTZNVGM0TnpRM05EQTJOQ3dpYm1KbUlqb3hOemczTkRjd05EWTBMQ0p3WVhSb0lqb2ljbVZzWldGelpXRnpjMlYwY0hKdlpIVmpkR2x2Ymk1aWJHOWlMbU52Y21VdWQybHVaRzkzY3k1dVpYUWlmUS5sSWtVQlFFWXhNMjA4ZUpCcHdQOFViUlM4Ymo4dnpqS1FCUm1waHpKSUVvJnJlc3BvbnNlLWNvbnRlbnQtZGlzcG9zaXRpb249YXR0YWNobWVudCUzQiUyMGZpbGVuYW1lJTNEUml6d2FuLU1lZGlhLVNhdmVyLVBDLXYxLjIuMC1QcmV2aWV3MTUtU2V0dXAuZXhlJnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1hcHBsaWNhdGlvbiUyRm9jdGV0LXN0cmVhbQ==
+      EXPECTED_SHA256: 613e072ba7e7b8d7a6ef980d3582962d146a9395e07fe41adc348d7d3692f8b6
+      EXPECTED_SIZE: 168203785
+      FILE_NAME: Rizwan-Media-Saver-PC-v1.2.0-Preview15-Setup.exe
+      TAG: preview15-chat-transfer
+    steps:
+      - name: Remove old Preview 14 transfer release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete preview14-chat-transfer --repo ALishafaqat123/rdp1 --yes --cleanup-tag 2>/dev/null || true
+
+      - name: Download verified private asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          url=$(printf '%s' "$SIGNED_URL_B64" | base64 -d)
+          curl -L --fail --retry 5 --retry-all-errors "$url" -o "$FILE_NAME"
+          actual=$(sha256sum "$FILE_NAME" | awk '{print $1}')
+          size=$(stat -c%s "$FILE_NAME")
+          test "$actual" = "$EXPECTED_SHA256"
+          test "$size" = "$EXPECTED_SIZE"
+
+      - name: Publish temporary public release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release delete "$TAG" --repo ALishafaqat123/rdp1 --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" "$FILE_NAME" --repo ALishafaqat123/rdp1 --title "Temporary Preview 15 Transfer" --notes "Temporary transfer asset for Preview 15 testing."
+
+      - name: Record transfer success
+        shell: bash
+        run: |
+          mkdir -p .transfer-status
+          printf 'SUCCESS\nfile=%s\nsha256=%s\nsize=%s\n' "$FILE_NAME" "$EXPECTED_SHA256" "$EXPECTED_SIZE" > .transfer-status/preview15.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .transfer-status/preview15.txt
+          git commit -m "Record Preview 15 transfer success" || exit 0
+          git push
