@@ -1,0 +1,39 @@
+name: Check Preview 17 Public Release
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/check-preview17-release.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .transfer-status
+          if gh release view preview17-chat-transfer >/tmp/release.txt 2>/dev/null; then
+            ASSET_JSON="$(gh api repos/ALishafaqat123/rdp1/releases/tags/preview17-chat-transfer)"
+            NAME="$(printf '%s' "$ASSET_JSON" | jq -r '.assets[] | select(.name=="Rizwan-Media-Saver-PC-v1.2.0-Preview17-Setup.exe") | .name' | head -1)"
+            SIZE="$(printf '%s' "$ASSET_JSON" | jq -r '.assets[] | select(.name=="Rizwan-Media-Saver-PC-v1.2.0-Preview17-Setup.exe") | .size' | head -1)"
+            if [ "$NAME" = "Rizwan-Media-Saver-PC-v1.2.0-Preview17-Setup.exe" ] && [ "$SIZE" = "168203809" ]; then
+              printf 'SUCCESS\nasset=yes\nsize=%s\n' "$SIZE" > .transfer-status/preview17-check.txt
+            else
+              printf 'NOT_READY\nasset=%s\nsize=%s\n' "$NAME" "$SIZE" > .transfer-status/preview17-check.txt
+            fi
+          else
+            printf 'NOT_READY\nrelease=no\n' > .transfer-status/preview17-check.txt
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .transfer-status/preview17-check.txt
+          git commit -m "Record Preview 17 public transfer status" || exit 0
+          git push
