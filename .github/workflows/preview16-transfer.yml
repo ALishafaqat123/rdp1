@@ -1,5 +1,6 @@
 name: Temporary Preview 16 Transfer
 
+# Registered transfer workflow — triggered again after first creation.
 on:
   push:
     branches: [ "main" ]
