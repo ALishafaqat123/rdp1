@@ -1,0 +1,62 @@
+name: Temporary Preview 18 Transfer
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/preview18-transfer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download verified Preview 18 installer
+        shell: bash
+        env:
+          SIGNED_URL_B64: "aHR0cHM6Ly9yZWxlYXNlLWFzc2V0cy5naXRodWJ1c2VyY29udGVudC5jb20vZ2l0aHViLXByb2R1Y3Rpb24tcmVsZWFzZS1hc3NldC8xMzI3ODMwNjgxLzc5MDFiNGI5LTdlMTMtNDVkYy1hOWUxLTY3YzMwYmRjZGYwNj9zcD1yJnN2PTIwMTgtMTEtMDkmc3I9YiZzcHI9aHR0cHMmc2U9MjAyNi0wOC0yM1QxMiUzQTI4JTNBNDBaJnJzY2Q9YXR0YWNobWVudCUzQitmaWxlbmFtZSUzRFJpendhbi1NZWRpYS1TYXZlci1QQy12MS4yLjAtUHJldmlldzE4LVNldHVwLmV4ZSZyc2N0PWFwcGxpY2F0aW9uJTJGb2N0ZXQtc3RyZWFtJnNrb2lkPTk2YzJkNDEwLTU3MTEtNDNhMS1hZWRkLWFiMTk0N2FhN2FiMCZza3RpZD0zOThhNjY1NC05OTdiLTQ3ZTktYjEyYi05NTE1Yjg5NmI0ZGUmc2t0PTIwMjYtMDgtMjNUMTElM0EyOCUzQTA0WiZza2U9MjAyNi0wOC0yM1QxMiUzQTI4JTNBNDBaJnNrcz1iJnNrdj0yMDE4LTExLTA5JnNpZz1wazRxSnh2UHZzT2swcEdtNHlzUXk4UE5hdlZKQ053Z0Jwb2F4VnYwcnlJJTNEJmp3dD1leUowZVhBaU9pSktWMVFpTENKaGJHY2lPaUpJVXpJMU5pSjkuZXlKcGMzTWlPaUpuYVhSb2RXSXVZMjl0SWl3aVlYVmtJam9pY21Wc1pXRnpaUzFoYzNObGRITXVaMmwwYUhWaWRYTmxjbU52Ym5SbGJuUXVZMjl0SWl3aWEyVjVJam9pYTJWNU1TSXNJbVY0Y0NJNk1UYzROelE0T0RFMU5Td2libUptSWpveE56ZzNORGcwTlRVMUxDSndZWFJvSWpvaWNtVnNaV0Z6WldGemMyVjBjSEp2WkhWamRHbHZiaTVpYkc5aUxtTnZjbVV1ZDJsdVpHOTNjeTV1WlhRaWZRLlZHSzV3d3lzQ0IwWHFKa2drUUpuWXIwMF8zT3hFV1JnUW9obXhMTE54VVUmcmVzcG9uc2UtY29udGVudC1kaXNwb3NpdGlvbj1hdHRhY2htZW50JTNCJTIwZmlsZW5hbWUlM0RSaXp3YW4tTWVkaWEtU2F2ZXItUEMtdjEuMi4wLVByZXZpZXcxOC1TZXR1cC5leGUmcmVzcG9uc2UtY29udGVudC10eXBlPWFwcGxpY2F0aW9uJTJGb2N0ZXQtc3RyZWFt"
+          EXPECTED_SHA: "8a095c4f8591518c0faf89a6eac6d025d698d4b5a267afd2d97cc82f9a46f144"
+        run: |
+          set -euo pipefail
+          file="Rizwan-Media-Saver-PC-v1.2.0-Preview18-Setup.exe"
+          url=$(printf '%s' "$SIGNED_URL_B64" | base64 -d)
+          curl -L --fail --retry 5 --retry-all-errors "$url" -o "$file"
+          actual=$(sha256sum "$file" | awk '{print $1}')
+          test "$actual" = "$EXPECTED_SHA"
+          echo "Verified $file • $actual"
+
+      - name: Publish temporary public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="preview18-chat-transfer"
+          file="Rizwan-Media-Saver-PC-v1.2.0-Preview18-Setup.exe"
+          gh release delete "$tag" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$tag" --title "Preview 18 temporary transfer" --notes "Temporary binary transfer only. No source code." "$file"
+
+      - name: Record transfer success
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo="ALishafaqat123/rdp1"
+          tag="preview18-chat-transfer"
+          file="Rizwan-Media-Saver-PC-v1.2.0-Preview18-Setup.exe"
+          rel=$(gh api "repos/$repo/releases/tags/$tag")
+          id=$(printf '%s' "$rel" | jq -r --arg n "$file" '.assets[] | select(.name==$n) | .id' | head -n1)
+          size=$(printf '%s' "$rel" | jq -r --arg n "$file" '.assets[] | select(.name==$n) | .size' | head -n1)
+          mkdir -p .transfer-status
+          printf 'SUCCESS\nasset_id=%s\nsize=%s\nsha256=%s\n' "$id" "$size" "8a095c4f8591518c0faf89a6eac6d025d698d4b5a267afd2d97cc82f9a46f144" > .transfer-status/preview18.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .transfer-status/preview18.txt
+          git commit -m "Record Preview 18 transfer success" || exit 0
+          git push origin HEAD:main
